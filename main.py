@@ -4,10 +4,12 @@ import database
 menu = """Please select one of the following options:
 1) Add new movie.
 2) View upcoming movies.
-3) View all unwatched movies
-4) Watch a movie
-5) View watched movies.
-6) Exit.
+3) View all movies that have been listed.
+4) Add user to the app.
+5) Watch a movie. 
+6) View watched movies.
+7) Search for a movie.
+8) Exit.
 
 Your selection: """
 welcome = "Welcome to the watchlist app!"
@@ -16,7 +18,12 @@ welcome = "Welcome to the watchlist app!"
 print(welcome)
 database.create_table()
 
+# Receives user input of username.
+def prompt_add_user():
+    username = input("Username: ")
+    database.add_user(username)
 
+# Receives user input of movie name and release date.
 def prompt_add_movie():
     title = input("Movie title: ")
     release_date = input("Release date (dd-mm-yyyy): ")
@@ -27,47 +34,63 @@ def prompt_add_movie():
 
     database.add_movie(title, timestamp)
 
+# Receives user input of partial movie name to search list of movies added.
+def prompt_search_movies():
+    search_term = input("Enter the partial movie title: ")
+    movies = database.search_movies(search_term)
+    if movies:
+        print_movie_list("Found", movies)
+    else:
+        print("Found no movies for that search term.")
+
+# Receives user input of username and movie id in order to mark a movie as watched.
 def prompt_watch_movie():
     username = input("Username: ")
-    movie_title = input("Enter movie title you've watched: ")
-    database.watch_movie(username, movie_title)
+    movie_id = input("Movie ID: ")
+    database.watch_movie(username, movie_id)
 
-def prompt_get_watched_movie():
+# Receives user input of username in order to list out their watched movies.
+def prompt_show_watched_movies():
     username = input("Username: ")
-    return database.get_watched_movies(username)
+    movies = database.get_watched_movies(username)
+    if movies:
+        print_movie_list(f"{username}'s Watched", movies)
+    else:
+        print(f"{username} has watched no movies yet!")
 
+# Prints the movie list and is reusable for various listings.
 def print_movie_list(heading, movies):
     print(f"-- {heading} Movies --")
-    for movie in movies:
-        movie_date = datetime.datetime.fromtimestamp(movie[1])
+    for _id, title, release_date in movies:
+        movie_date = datetime.datetime.fromtimestamp(release_date)
         human_date = movie_date.strftime("%b %d %Y")
-        print(f"{movie[0]} (on {human_date})")
+        print(f"{_id}: {title} (on {human_date})")
     print("---- \n")
 
-def print_watched_movie_list(movies):
-    print(f"-- {movies[0][0]}'s Watched Movies --")
-    for movie in movies:
-        print(f"{movie[1]}")
-    print("---- \n")
 
-while (user_input := input(menu)) != "6":
-    # Add a new movie to be watched to the list.
+while (user_input := input(menu)) != "8":
+    # User can add a new movie that they want to watch to the list.
     if user_input == "1":
         prompt_add_movie()
     # View all movies that have release dates in the future.
     elif user_input == "2":
         movies = database.get_movies(True)
         print_movie_list("Upcoming", movies)
-    # View all unwatched movies on the list.
+    # View all movies on the list.
     elif user_input == "3":
         movies = database.get_movies(False)
         print_movie_list("All", movies)
-    # Set a movie to watched.
+    # Add a new user to the app that can marked movies that they have watched
     elif user_input == "4":
+        prompt_add_user()
+    # Mark a movie that has been watched by a user.
+    elif user_input == "5":
         prompt_watch_movie()
     # View all watched movies by a specific username.
-    elif user_input == "5":
-        movies = prompt_get_watched_movie()
-        print_watched_movie_list(movies)
+    elif user_input == "6":
+        prompt_show_watched_movies()
+    # Search for movies that have been 
+    elif user_input == "7":
+        prompt_search_movies()
     else:
         print("Invalid input, please try again!")
